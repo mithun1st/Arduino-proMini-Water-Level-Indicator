@@ -1,11 +1,14 @@
 #include<LiquidCrystal.h>
 #include <EEPROM.h>
 
-LiquidCrystal lcd(9,8,7,6,5,4);
+LiquidCrystal lcd(9, 8, 7, 6, 5, 4);
 
+//input encode (to know tslow n tsfull)
+bool encode = true;
 
 //input section- A to B height of tank
 const byte tslow = 20, tsfull = 50;
+
 
 //define state of tank level from 0 to 100
 const byte empty = 9, low = 20, medium = 50, normal = 93;
@@ -122,9 +125,9 @@ void setup() {
   pinMode(au, INPUT);
 
   digitalWrite(m, LOW);
-  
-  motor=EEPROM.read(0);
-  digitalWrite(bl,motor);
+
+  motor = EEPROM.read(0);
+  digitalWrite(bl, motor);
 
   //
   pinMode(A3, INPUT);
@@ -165,149 +168,165 @@ void setup() {
 
 void loop() {
 
+  //testing
+  //va = map(analogRead(A3), 0, 1018, 0, 100);
   //
-  va = map(analogRead(A3), 0, 1018, 0, 100);
-  //
 
 
-  //va =sonic();
-  va = map(va, tsfull, tslow, 0, 100);
-  if (va > 100) {
-    va = 100;
-  }
-  else if (va < 0) {
-    va = 0;
-  }
+  va = sonic();
 
 
-  //print with lcd
-  lcd.clear();
-
-  if (va >= normal) {
-    rgb(0, 1, 1);
+  if (encode) {
+    //<encode>
+    lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(" Tank: Full !!!");
+    lcd.print((String)sonic());
+    Serial.println(va);
+    delay(1000);
+    // </encode>
+
   }
-  else if (va > medium) {
-    rgb(0, 1, 0);
-    lcd.setCursor(0, 0);
-    lcd.print(" Tank: Normal ");
-    lcd.write(5);
-  }
-  else if (va > low) {
-    rgb(0, 0, 1);
-    lcd.setCursor(0, 0);
-    lcd.print(" Tank: Medium ");
-    lcd.write(6);
-  }
-  else if (va > empty) {
-    rgb(1, 1, 0);
-    lcd.setCursor(0, 0);
-    lcd.print(" Tank:  Low   ");
-    lcd.write(7);
-  }
-  else if (va >= 0) {
-    rgb(1, 0, 0);
-    lcd.setCursor(0, 0);
-    lcd.print(" Tank: Empty !!!");
-  }
+  else {
+    va = map(va, tsfull, tslow, 0, 100);
+    if (va > 100) {
+      va = 100;
+    }
+    else if (va < 0) {
+      va = 0;
+    }
 
 
-  //motor section
-  if (digitalRead(au)) {
-    delay(700);
+    //print with lcd
+    lcd.clear();
+
+    if (va >= normal) {
+      rgb(0, 1, 1);
+      lcd.setCursor(0, 0);
+      lcd.print(" Tank: Full !!!");
+    }
+    else if (va > medium) {
+      rgb(0, 1, 0);
+      lcd.setCursor(0, 0);
+      lcd.print(" Tank: Normal ");
+      lcd.write(5);
+    }
+    else if (va > low) {
+      rgb(0, 0, 1);
+      lcd.setCursor(0, 0);
+      lcd.print(" Tank: Medium ");
+      lcd.write(6);
+    }
+    else if (va > empty) {
+      rgb(1, 1, 0);
+      lcd.setCursor(0, 0);
+      lcd.print(" Tank:  Low   ");
+      lcd.write(7);
+    }
+    else if (va >= 0) {
+      rgb(1, 0, 0);
+      lcd.setCursor(0, 0);
+      lcd.print(" Tank: Empty !!!");
+    }
+
+
+    //motor section
     if (digitalRead(au)) {
-      motor = !motor;
-      EEPROM.update(0,motor);
-      buzzer(200);
-      lcd.setCursor(1, 2);
-      if (motor) {
-        lcd.print("Auto Mode: ON");
+      delay(700);
+      if (digitalRead(au)) {
+        motor = !motor;
+        EEPROM.update(0, motor);
+        buzzer(200);
+        lcd.setCursor(1, 2);
+        if (motor) {
+          lcd.print("Auto Mode: ON");
+        }
+        else {
+          lcd.print("Auto Mode: OFF");
+          digitalWrite(m, LOW);
+        }
+        digitalWrite(bl, motor);
+        delay(3000);
       }
-      else {
-        lcd.print("Auto Mode: OFF");
-        digitalWrite(m, LOW);
-      }
-      digitalWrite(bl, motor);
-      delay(3000);
+
     }
 
-  }
-
-  if (va <= mOn && motor && mx) {
-    digitalWrite(m, HIGH);
-    buzzer(100);
-    mx = false;
-    my = true;
-  }
-  else if (va >= mOff && motor && my) {
-    digitalWrite(m, LOW);
-    buzzer(100);
-    my = false;
-    mx = true;
-  }
+    if (va <= mOn && motor && mx) {
+      digitalWrite(m, HIGH);
+      buzzer(100);
+      mx = false;
+      my = true;
+    }
+    else if (va >= mOff && motor && my) {
+      digitalWrite(m, LOW);
+      buzzer(100);
+      my = false;
+      mx = true;
+    }
 
 
-  //bATTERY sECTION
-  lcd.setCursor(0, 1);
-  lcd.write(1);
-
-  lcd.setCursor(1, 1);
-  for (int i = 0; i <= 10; i++) {
-    lcd.write(2);
-  }
-  lcd.setCursor(0, 1);
-  for (int i = 0; i <= map(va, 0, 100, 0, 10); i++) {
+    //bATTERY sECTION
+    lcd.setCursor(0, 1);
     lcd.write(1);
-    if (va <= 1) {
-      lcd.setCursor(0, 1);
-      lcd.write(8);
+
+    lcd.setCursor(1, 1);
+    for (int i = 0; i <= 10; i++) {
+      lcd.write(2);
     }
-    else if (i == map(va, 0, 100, 0, 10)) {
-      lcd.write(4);
+    lcd.setCursor(0, 1);
+    for (int i = 0; i <= map(va, 0, 100, 0, 10); i++) {
+      lcd.write(1);
+      if (va <= 1) {
+        lcd.setCursor(0, 1);
+        lcd.write(8);
+      }
+      else if (i == map(va, 0, 100, 0, 10)) {
+        lcd.write(4);
+      }
     }
+
+    lcd.setCursor(11, 1);
+    lcd.write(3);
+    if (va < 100) {
+      lcd.print(" ");
+    }
+    lcd.print(va);
+    lcd.print("%");
+
+
+    //tank full
+    if (!motor) {
+      if (va >= normal && fu) {
+        warf(beep);
+        fu = false;
+      }
+      if (!fu && va < normal - 3) {
+        fu = true;
+      }
+
+      //tank low
+      if (va <= empty && lo) {
+        warl(beep);
+        lo = false;
+      }
+      if (!lo && va > empty + 3) {
+        lo = true;
+      }
+    }
+
+
+    delay(refreshRate);
+
+
+    //print with serial communication
+    //Serial.print(sonic());
+    //  Serial.print(sonic());
+    //  Serial.print("\t");
+    //  Serial.println (va);
+    //  Serial.print("\t");
+    //  Serial.println (motor);
   }
 
-  lcd.setCursor(11, 1);
-  lcd.write(3);
-  if (va < 100) {
-    lcd.print(" ");
-  }
-  lcd.print(va);
-  lcd.print("%");
 
-
-  //tank full
-  if (!motor) {
-    if (va >= normal && fu) {
-      warf(beep);
-      fu = false;
-    }
-    if (!fu && va < normal - 3) {
-      fu = true;
-    }
-
-    //tank low
-    if (va <= empty && lo) {
-      warl(beep);
-      lo = false;
-    }
-    if (!lo && va > empty + 3) {
-      lo = true;
-    }
-  }
-
-
-  delay(refreshRate);
-
-
-  //print with serial communication
-  //Serial.print(sonic());
-  //  Serial.print(sonic());
-  //  Serial.print("\t");
-  //  Serial.println (va);
-  //  Serial.print("\t");
-  //  Serial.println (motor);
 }
 
 
