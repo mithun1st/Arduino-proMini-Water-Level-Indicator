@@ -9,12 +9,15 @@ bool encode = true;
 //input section- A to B height of tank
 const byte tslow = 20, tsfull = 102;
 
+//input motor on / off percent
+const byte mOn = 5, mOff = 97;
+
+//input alarm low n full percent
+const byte fullAlarm = 5, lowAlarm = 95;
+
 
 //define state of tank level from 0 to 100
-const byte empty = 9, low = 20, medium = 50, normal = 95;
-
-//define motor controll
-const byte mOn = 5, mOff = 97;
+const byte empty = 9, low = 20, medium = 50, normal = 93;
 
 //how many num of beep sound & set refreshrate
 const byte beep = 7, refreshRate = 3000;
@@ -183,9 +186,8 @@ void loop() {
     lcd.print(va);
     Serial.println(va);
     delay(1000);
-    // </encode>
-
   }
+  
   else {
     va = map(va, tsfull, tslow, 0, 100);
     if (va > 100) {
@@ -299,20 +301,20 @@ void loop() {
 
     //tank full
     if (!motor) {
-      if (va >= normal && fu) {
+      if (va >= fullAlarm && fu) {
         warf(beep);
         fu = false;
       }
-      if (!fu && va < normal - 3) {
+      if (!fu && va < fullAlarm - 3) {
         fu = true;
       }
 
       //tank low
-      if (va <= empty && lo) {
+      if (va <= lowAlarm && lo) {
         warl(beep);
         lo = false;
       }
-      if (!lo && va > empty + 3) {
+      if (!lo && va > lowAlarm + 3) {
         lo = true;
       }
     }
