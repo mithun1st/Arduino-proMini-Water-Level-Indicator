@@ -7,17 +7,17 @@ LiquidCrystal lcd(9, 8, 7, 6, 5, 4);
 bool encode = true;
 
 //input section- A to B height of tank
-const byte tslow = 20, tsfull = 50;
+const byte tslow = 20, tsfull = 102;
 
 
 //define state of tank level from 0 to 100
-const byte empty = 9, low = 20, medium = 50, normal = 93;
+const byte empty = 9, low = 20, medium = 50, normal = 95;
 
-//define state of tank level from 0 to 100
+//define motor controll
 const byte mOn = 5, mOff = 97;
 
 //how many num of beep sound & set refreshrate
-const byte beep = 7, refreshRate = 1000;
+const byte beep = 7, refreshRate = 3000;
 
 
 int va;
@@ -176,11 +176,11 @@ void loop() {
   va = sonic();
 
 
-  if (encode) {
+  if (!encode) {
     //<encode>
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print((String)sonic());
+    lcd.print(va);
     Serial.println(va);
     delay(1000);
     // </encode>
@@ -200,6 +200,8 @@ void loop() {
     lcd.clear();
 
     if (va >= normal) {
+      refreshRate = 5000;
+      
       rgb(0, 1, 1);
       lcd.setCursor(0, 0);
       lcd.print(" Tank: Full !!!");
@@ -217,6 +219,8 @@ void loop() {
       lcd.write(6);
     }
     else if (va > empty) {
+      refreshRate = 2000;
+      
       rgb(1, 1, 0);
       lcd.setCursor(0, 0);
       lcd.print(" Tank:  Low   ");
